@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import { getPatientById, fetchPatientObservations, fetchPatientMedications, fetchPatientImmunizations } from "@/utils/mockData";
 import { formatGender, formatAddress, getPatientAge, formatDate, getObservationName, formatObservationValue, getMedicationName, getMedicationInstructions, getImmunizationName } from "@/utils/formatters";
-import { Heart, Pill, Syringe, ArrowLeft } from "lucide-react";
+import { Heart, Pill, Syringe, ArrowLeft, Activity } from "lucide-react";
 import DataCard from "@/components/DataCard";
 import { Card, CardContent } from "@/components/ui/card";
+import HemoglobinChart from "@/components/HemoglobinChart";
 
 const Patient = () => {
   const { id } = useParams<{ id: string }>();
@@ -153,6 +154,15 @@ const Patient = () => {
                 </div>
               </CardContent>
             </Card>
+          </section>
+          
+          {/* Hemoglobin Chart Section - Always visible */}
+          <section>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Vital Signs
+            </h2>
+            <HemoglobinChart observations={observations} />
           </section>
           
           <Tabs defaultValue="observations" className="w-full">

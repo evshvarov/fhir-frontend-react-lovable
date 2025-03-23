@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import { fetchPatients, fetchObservations, getPatientById } from "@/utils/mockData";
 import DataCard from "@/components/DataCard";
-import { Heart } from "lucide-react";
+import { Heart, Activity } from "lucide-react";
 import { formatDate, getObservationName, formatObservationValue, getPatientName } from "@/utils/formatters";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import HemoglobinChart from "@/components/HemoglobinChart";
 
 const Observations = () => {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
@@ -112,6 +113,26 @@ const Observations = () => {
               </div>
             </div>
           </div>
+          
+          {/* Hemoglobin Chart Section */}
+          {selectedPatient !== "all" && (
+            <section>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Hemoglobin Trend
+              </h2>
+              <HemoglobinChart 
+                observations={filteredObservations.filter(obs => {
+                  const coding = obs.code?.coding || [];
+                  return coding.some((code: any) => 
+                    code.code === "718-7" || 
+                    code.display?.toLowerCase().includes("hemoglobin") ||
+                    obs.code?.text?.toLowerCase().includes("hemoglobin")
+                  );
+                })}
+              />
+            </section>
+          )}
           
           {sortedObservations.length === 0 ? (
             <div className="text-center p-12 text-muted-foreground border border-border/50 rounded-lg">

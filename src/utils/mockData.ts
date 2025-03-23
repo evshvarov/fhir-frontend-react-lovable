@@ -31,6 +31,19 @@ export const fetchPatientObservations = async (patientId: string) => {
 // For backward compatibility
 export const getPatientObservations = fetchPatientObservations;
 
+// Fetch hemoglobin observations for a specific patient
+export const fetchPatientHemoglobinObservations = async (patientId: string) => {
+  try {
+    // LOINC code 718-7 for Hemoglobin in Blood
+    const response = await fetch(`${FHIR_SERVER_URL}Observation?patient=${patientId}&code=718-7,4548-4,30313-1`);
+    const data = await response.json();
+    return data.entry?.map((entry: any) => entry.resource) || [];
+  } catch (error) {
+    console.error('Error fetching hemoglobin observations:', error);
+    return [];
+  }
+};
+
 // Fetch all observations
 export const fetchObservations = async () => {
   try {
