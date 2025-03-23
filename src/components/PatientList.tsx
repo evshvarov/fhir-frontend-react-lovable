@@ -1,17 +1,27 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { patients } from "@/utils/mockData";
+import { fetchPatients } from "@/utils/mockData";
 import PatientCard from "./PatientCard";
 import { getPatientName } from "@/utils/formatters";
 
 const PatientList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
+  const { data: patients = [], isLoading } = useQuery({
+    queryKey: ['patients'],
+    queryFn: fetchPatients,
+  });
+  
   const filteredPatients = patients.filter(patient => {
     const fullName = getPatientName(patient).toLowerCase();
     return fullName.includes(searchQuery.toLowerCase());
   });
+  
+  if (isLoading) {
+    return <div>Loading patients...</div>;
+  }
   
   return (
     <div className="space-y-4">
@@ -30,7 +40,7 @@ const PatientList = () => {
             No patients found matching your search.
           </div>
         ) : (
-          filteredPatients.map((patient, index) => (
+          filteredPatients.map((patient) => (
             <div key={patient.id} className="stagger-item">
               <PatientCard patient={patient} />
             </div>

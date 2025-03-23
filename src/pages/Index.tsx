@@ -1,23 +1,49 @@
-
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
-import { patients, getPatientObservations, getPatientMedications, getPatientImmunizations } from "@/utils/mockData";
+import { fetchPatients, fetchPatientObservations, fetchPatientMedications, fetchPatientImmunizations } from "@/utils/mockData";
 import { getPatientName } from "@/utils/formatters";
 import { Link } from "react-router-dom";
 import PatientList from "@/components/PatientList";
 import DataCard from "@/components/DataCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Pill, Syringe, User } from "lucide-react";
+import { useState } from "react";
 
 const Index = () => {
-  // Get the first patient for demo purposes (normally would use selected patient)
-  const currentPatient = patients[0];
-  const patientId = currentPatient.id;
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   
-  // Get data for the patient
-  const observations = getPatientObservations(patientId);
-  const medications = getPatientMedications(patientId);
-  const immunizations = getPatientImmunizations(patientId);
+  // Fetch patients
+  const { data: patients = [], isLoading: isPatientsLoading } = useQuery({
+    queryKey: ['patients'],
+    queryFn: fetchPatients,
+  });
+
+  // Fetch data for the first or selected patient
+  const currentPatientId = selectedPatientId || (patients[0]?.id ?? null);
+  
+  const { data: observations = [], isLoading: isObservationsLoading } = useQuery({
+    queryKey: ['observations', currentPatientId],
+    queryFn: () => currentPatientId ? fetchPatientObservations(currentPatientId) : [],
+    enabled: !!currentPatientId,
+  });
+  
+  const { data: medications = [], isLoading: isMedicationsLoading } = useQuery({
+    queryKey: ['medications', currentPatientId],
+    queryFn: () => currentPatientId ? fetchPatientMedications(currentPatientId) : [],
+    enabled: !!currentPatientId,
+  });
+  
+  const { data: immunizations = [], isLoading: isImmunizationsLoading } = useQuery({
+    queryKey: ['immunizations', currentPatientId],
+    queryFn: () => currentPatientId ? fetchPatientImmunizations(currentPatientId) : [],
+    enabled: !!currentPatientId,
+  });
+  
+  // Loading state
+  if (isPatientsLoading) {
+    return <div>Loading patients...</div>;
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +61,7 @@ const Index = () => {
           </section>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Existing Card Content */}
             <Card className="col-span-1 md:col-span-3 glass p-4 border border-border/50">
               <CardContent className="p-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -81,6 +108,7 @@ const Index = () => {
               </CardContent>
             </Card>
             
+            {/* Rest of the existing content */}
             <div className="col-span-1 space-y-6">
               <DataCard 
                 title="Patients" 
