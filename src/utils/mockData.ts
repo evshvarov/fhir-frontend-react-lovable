@@ -1,7 +1,7 @@
 
 import { FHIR_SERVER_URL } from '@/config/fhir';
 
-// Fetch patient data from FHIR server
+// Fetch all patients data from FHIR server
 export const fetchPatients = async () => {
   try {
     const response = await fetch(`${FHIR_SERVER_URL}Patient`);
@@ -12,6 +12,9 @@ export const fetchPatients = async () => {
     return [];
   }
 };
+
+// For backward compatibility
+export const patients = fetchPatients;
 
 // Fetch observations for a specific patient
 export const fetchPatientObservations = async (patientId: string) => {
@@ -25,6 +28,24 @@ export const fetchPatientObservations = async (patientId: string) => {
   }
 };
 
+// For backward compatibility
+export const getPatientObservations = fetchPatientObservations;
+
+// Fetch all observations
+export const fetchObservations = async () => {
+  try {
+    const response = await fetch(`${FHIR_SERVER_URL}Observation`);
+    const data = await response.json();
+    return data.entry?.map((entry: any) => entry.resource) || [];
+  } catch (error) {
+    console.error('Error fetching observations:', error);
+    return [];
+  }
+};
+
+// For backward compatibility
+export const observations = fetchObservations;
+
 // Fetch medications for a specific patient
 export const fetchPatientMedications = async (patientId: string) => {
   try {
@@ -37,6 +58,24 @@ export const fetchPatientMedications = async (patientId: string) => {
   }
 };
 
+// For backward compatibility
+export const getPatientMedications = fetchPatientMedications;
+
+// Fetch all medications
+export const fetchMedications = async () => {
+  try {
+    const response = await fetch(`${FHIR_SERVER_URL}MedicationRequest`);
+    const data = await response.json();
+    return data.entry?.map((entry: any) => entry.resource) || [];
+  } catch (error) {
+    console.error('Error fetching medications:', error);
+    return [];
+  }
+};
+
+// For backward compatibility
+export const medications = fetchMedications;
+
 // Fetch immunizations for a specific patient
 export const fetchPatientImmunizations = async (patientId: string) => {
   try {
@@ -48,6 +87,24 @@ export const fetchPatientImmunizations = async (patientId: string) => {
     return [];
   }
 };
+
+// For backward compatibility
+export const getPatientImmunizations = fetchPatientImmunizations;
+
+// Fetch all immunizations
+export const fetchImmunizations = async () => {
+  try {
+    const response = await fetch(`${FHIR_SERVER_URL}Immunization`);
+    const data = await response.json();
+    return data.entry?.map((entry: any) => entry.resource) || [];
+  } catch (error) {
+    console.error('Error fetching immunizations:', error);
+    return [];
+  }
+};
+
+// For backward compatibility
+export const immunizations = fetchImmunizations;
 
 // Find a patient by ID
 export const getPatientById = async (patientId: string) => {

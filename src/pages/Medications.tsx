@@ -1,7 +1,8 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
-import { patients, medications, getPatientById } from "@/utils/mockData";
+import { fetchPatients, fetchMedications, getPatientById } from "@/utils/mockData";
 import DataCard from "@/components/DataCard";
 import { Pill } from "lucide-react";
 import { formatDate, getMedicationName, getMedicationInstructions, getPatientName } from "@/utils/formatters";
@@ -13,9 +14,21 @@ const Medications = () => {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   
+  const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
+    queryKey: ['patients'],
+    queryFn: fetchPatients,
+  });
+  
+  const { data: allMedications = [], isLoading: isLoadingMedications } = useQuery({
+    queryKey: ['medications'],
+    queryFn: fetchMedications,
+  });
+  
+  const isLoading = isLoadingPatients || isLoadingMedications;
+  
   // Filter medications based on selected patient and search query
-  const filteredMedications = medications.filter(med => {
-    const matchesPatient = selectedPatient === "all" || med.subject.reference.includes(selectedPatient);
+  const filteredMedications = allMedications.filter(med => {
+    const matchesPatient = selectedPatient === "all" || med.subject?.reference?.includes(selectedPatient);
     const medicationName = getMedicationName(med).toLowerCase();
     const matchesSearch = medicationName.includes(searchQuery.toLowerCase());
     
@@ -24,8 +37,23 @@ const Medications = () => {
   
   // Sort medications by date (newest first)
   const sortedMedications = [...filteredMedications].sort((a, b) => {
-    return new Date(b.authoredOn).getTime() - new Date(a.authoredOn).getTime();
+    return new Date(b.authoredOn || 0).getTime() - new Date(a.authoredOn || 0).getTime();
   });
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container max-w-7xl mx-auto pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Loading medications...</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +120,9 @@ const Medications = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sortedMedications.map((med, index) => {
-                const patient = getPatientById(med.subject.reference.split('/')[1]);
+                // Extract patient ID from reference
+                const patientRef = med.subject?.reference || '';
+                const patientId = patientRef.split('/')[1];
                 
                 return (
                   <div key={med.id} className="stagger-item">
@@ -110,12 +140,10 @@ const Medications = () => {
                           <div className="text-sm text-muted-foreground">
                             Prescribed on {formatDate(med.authoredOn)}
                           </div>
-                          {patient && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Patient: </span>
-                              {getPatientName(patient)}
-                            </div>
-                          )}
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Patient: </span>
+                            {patientRef ? `Patient ${patientId}` : 'Unknown'}
+                          </div>
                         </div>
                         
                         <div className="grid gap-1">

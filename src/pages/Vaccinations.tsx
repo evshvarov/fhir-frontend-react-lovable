@@ -1,7 +1,8 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
-import { patients, immunizations, getPatientById } from "@/utils/mockData";
+import { fetchPatients, fetchImmunizations, getPatientById } from "@/utils/mockData";
 import DataCard from "@/components/DataCard";
 import { Syringe } from "lucide-react";
 import { formatDate, getImmunizationName, getPatientName } from "@/utils/formatters";
@@ -13,9 +14,21 @@ const Vaccinations = () => {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   
+  const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
+    queryKey: ['patients'],
+    queryFn: fetchPatients,
+  });
+  
+  const { data: allImmunizations = [], isLoading: isLoadingImmunizations } = useQuery({
+    queryKey: ['immunizations'],
+    queryFn: fetchImmunizations,
+  });
+  
+  const isLoading = isLoadingPatients || isLoadingImmunizations;
+  
   // Filter immunizations based on selected patient and search query
-  const filteredImmunizations = immunizations.filter(imm => {
-    const matchesPatient = selectedPatient === "all" || imm.patient.reference.includes(selectedPatient);
+  const filteredImmunizations = allImmunizations.filter(imm => {
+    const matchesPatient = selectedPatient === "all" || imm.patient?.reference?.includes(selectedPatient);
     const immunizationName = getImmunizationName(imm).toLowerCase();
     const matchesSearch = immunizationName.includes(searchQuery.toLowerCase());
     
@@ -24,8 +37,23 @@ const Vaccinations = () => {
   
   // Sort immunizations by date (newest first)
   const sortedImmunizations = [...filteredImmunizations].sort((a, b) => {
-    return new Date(b.occurrenceDateTime).getTime() - new Date(a.occurrenceDateTime).getTime();
+    return new Date(b.occurrenceDateTime || 0).getTime() - new Date(a.occurrenceDateTime || 0).getTime();
   });
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container max-w-7xl mx-auto pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Loading vaccinations...</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +120,9 @@ const Vaccinations = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sortedImmunizations.map((imm, index) => {
-                const patient = getPatientById(imm.patient.reference.split('/')[1]);
+                // Extract patient ID from reference
+                const patientRef = imm.patient?.reference || '';
+                const patientId = patientRef.split('/')[1];
                 
                 return (
                   <div key={imm.id} className="stagger-item">
@@ -106,12 +136,10 @@ const Vaccinations = () => {
                           <div className="text-sm text-muted-foreground">
                             Administered on {formatDate(imm.occurrenceDateTime)}
                           </div>
-                          {patient && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Patient: </span>
-                              {getPatientName(patient)}
-                            </div>
-                          )}
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Patient: </span>
+                            {patientRef ? `Patient ${patientId}` : 'Unknown'}
+                          </div>
                         </div>
                         
                         <div className="grid gap-1">

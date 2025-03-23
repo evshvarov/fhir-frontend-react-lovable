@@ -1,11 +1,12 @@
 
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
-import { patients, getPatientById, getPatientObservations, getPatientMedications, getPatientImmunizations } from "@/utils/mockData";
+import { getPatientById, fetchPatientObservations, fetchPatientMedications, fetchPatientImmunizations } from "@/utils/mockData";
 import { formatGender, formatAddress, getPatientAge, formatDate, getObservationName, formatObservationValue, getMedicationName, getMedicationInstructions, getImmunizationName } from "@/utils/formatters";
-import { Heart, Pill, Syringe, User, ArrowLeft } from "lucide-react";
+import { Heart, Pill, Syringe, ArrowLeft } from "lucide-react";
 import DataCard from "@/components/DataCard";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -14,7 +15,46 @@ const Patient = () => {
   const navigate = useNavigate();
   
   const patientId = id || "patient-1"; // Default to first patient if no ID provided
-  const patient = getPatientById(patientId);
+  
+  const { data: patient, isLoading: isLoadingPatient } = useQuery({
+    queryKey: ['patient', patientId],
+    queryFn: () => getPatientById(patientId),
+  });
+  
+  const { data: observations = [], isLoading: isLoadingObservations } = useQuery({
+    queryKey: ['patientObservations', patientId],
+    queryFn: () => fetchPatientObservations(patientId),
+    enabled: !!patientId,
+  });
+  
+  const { data: medications = [], isLoading: isLoadingMedications } = useQuery({
+    queryKey: ['patientMedications', patientId],
+    queryFn: () => fetchPatientMedications(patientId),
+    enabled: !!patientId,
+  });
+  
+  const { data: immunizations = [], isLoading: isLoadingImmunizations } = useQuery({
+    queryKey: ['patientImmunizations', patientId],
+    queryFn: () => fetchPatientImmunizations(patientId),
+    enabled: !!patientId,
+  });
+  
+  const isLoading = isLoadingPatient || isLoadingObservations || isLoadingMedications || isLoadingImmunizations;
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container max-w-7xl mx-auto pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Loading patient data...</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (!patient) {
     return (
@@ -30,13 +70,8 @@ const Patient = () => {
     );
   }
   
-  // Get data for this patient
-  const observations = getPatientObservations(patientId);
-  const medications = getPatientMedications(patientId);
-  const immunizations = getPatientImmunizations(patientId);
-  
   // Format patient details
-  const name = patient.name[0];
+  const name = patient.name?.[0] || {};
   const fullName = `${name.given ? name.given.join(' ') : ''} ${name.family || ''}`.trim();
   const age = getPatientAge(patient.birthDate);
   const gender = formatGender(patient.gender);

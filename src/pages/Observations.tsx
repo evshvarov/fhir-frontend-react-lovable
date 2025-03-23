@@ -1,7 +1,8 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
-import { patients, observations, getPatientById } from "@/utils/mockData";
+import { fetchPatients, fetchObservations, getPatientById } from "@/utils/mockData";
 import DataCard from "@/components/DataCard";
 import { Heart } from "lucide-react";
 import { formatDate, getObservationName, formatObservationValue, getPatientName } from "@/utils/formatters";
@@ -13,9 +14,21 @@ const Observations = () => {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   
+  const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
+    queryKey: ['patients'],
+    queryFn: fetchPatients,
+  });
+  
+  const { data: allObservations = [], isLoading: isLoadingObservations } = useQuery({
+    queryKey: ['observations'],
+    queryFn: fetchObservations,
+  });
+  
+  const isLoading = isLoadingPatients || isLoadingObservations;
+  
   // Filter observations based on selected patient and search query
-  const filteredObservations = observations.filter(obs => {
-    const matchesPatient = selectedPatient === "all" || obs.subject.reference.includes(selectedPatient);
+  const filteredObservations = allObservations.filter(obs => {
+    const matchesPatient = selectedPatient === "all" || obs.subject?.reference?.includes(selectedPatient);
     const observationName = getObservationName(obs).toLowerCase();
     const matchesSearch = observationName.includes(searchQuery.toLowerCase());
     
@@ -24,8 +37,23 @@ const Observations = () => {
   
   // Sort observations by date (newest first)
   const sortedObservations = [...filteredObservations].sort((a, b) => {
-    return new Date(b.effectiveDateTime).getTime() - new Date(a.effectiveDateTime).getTime();
+    return new Date(b.effectiveDateTime || 0).getTime() - new Date(a.effectiveDateTime || 0).getTime();
   });
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container max-w-7xl mx-auto pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Loading observations...</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +120,10 @@ const Observations = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sortedObservations.map((obs, index) => {
-                const patient = getPatientById(obs.subject.reference.split('/')[1]);
+                // Extract patient ID from reference
+                const patientRef = obs.subject?.reference || '';
+                const patientId = patientRef.split('/')[1];
+                const patientData = patientId ? getPatientById(patientId) : null;
                 
                 return (
                   <div key={obs.id} className="stagger-item">
@@ -110,12 +141,11 @@ const Observations = () => {
                           <div className="text-sm text-muted-foreground">
                             Recorded on {formatDate(obs.effectiveDateTime)}
                           </div>
-                          {patient && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Patient: </span>
-                              {getPatientName(patient)}
-                            </div>
-                          )}
+                          {/* Patient info will be populated asynchronously when data is loaded */}
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Patient: </span>
+                            {patientRef ? `Patient ${patientId}` : 'Unknown'}
+                          </div>
                         </div>
                         
                         <div className="grid gap-1">
