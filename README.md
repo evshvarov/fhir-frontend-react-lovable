@@ -12,6 +12,7 @@ You can fork this project and alter the UI to a proper server [here](https://git
 
 Or build a new one with Lovable - here is the [video podcast](https://www.youtube.com/watch?v=NmQipSlYaeg) on how it was built.
 
+<img width="1217" alt="Image" src="https://github.com/user-attachments/assets/38d9736b-2830-4045-b2bd-0f887dab29de" />
 
 ## Project info
 
