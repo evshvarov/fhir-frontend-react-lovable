@@ -1,4 +1,17 @@
-# Welcome to your Lovable project
+# InterSystems FHIR Frontend built with Lovable
+
+## What it is about?
+
+This is a generated prompt-to-code UI providing a frontend UI for InterSystems FHIR Server R4
+
+To make it work:
+1. Launch your InterSystems FHIR server e.g. using [this repository]([url](https://github.com/intersystems-community/iris-fhir-template))
+2. Open the [published UI here]([url](https://patientverse-ui.lovable.app/))
+
+You can fork this project and alter the UI to a proper server [here](https://github.com/evshvarov/fhir-frontend-react-lovable/blob/6de12f125edb47c09a31519136e165a0e16462f3/src/config/fhir.ts#L2) (by default it looks to http://localhost:32783/fhir/r4/)
+
+Or build a new one with Lovable - here is the [video podcast](https://www.youtube.com/watch?v=NmQipSlYaeg) on how it was built.
+
 
 ## Project info
 
